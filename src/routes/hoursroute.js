@@ -35,6 +35,7 @@ router.post("/V1/hoursData", async (req, res) => {
   }
 });
 
+//gethourscalculation with total hours
 router.get("/V1/gethourDataWithTotalCosts", async (req, res) => {
   try {
     const hoursDetails = await hoursModel.find({ isDeleted: false });
@@ -62,6 +63,7 @@ router.get("/V1/gethourDataWithTotalCosts", async (req, res) => {
   }
 });
 
+// only hours will be update
 router.put("/V1/updatehours/:hoursid", async (req, res) => {
   try {
     const hoursid = req.params.hoursid;

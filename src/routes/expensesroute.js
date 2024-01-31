@@ -137,7 +137,7 @@ router.delete("/V1/expensesDelate/:expenseid", async (req, res) => {
   }
 });
 
-// router.get("/V1/getallData", async (req, res) => {
+// router.get("/V1/getexpenseData", async (req, res) => {
 //   try {
 //     const client = await clientModel.find();
 //     const member = await memberModel.find();

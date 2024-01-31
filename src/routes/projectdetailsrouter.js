@@ -48,11 +48,9 @@ router.post("/V1/proDetails", async (req, res) => {
     const projectDetail = new projectdetailsModel(Data);
     await projectDetail.save();
 
-    return res.status(201).send({
-      status: true,
-      message: "ProjectDetail created successfully",
-      data: projectDetail,
-    });
+    return res.status(201).send(
+     
+projectDetail);
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -60,13 +58,26 @@ router.post("/V1/proDetails", async (req, res) => {
 
 router.get("/V1/getallData", async (req, res) => {
   try {
-    const client = await clientModel.find({ isDeleted: false });
-    const project = await projectdetailsModel.find();
-    return res.status(200).send({ client, project });
+    
+    const project = await projectdetailsModel.find({ isDeleted: false });
+    return res.status(200).send(project);
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
+ //get clientName wrt to this api 
+ router.get("/V1/getclient", async (req, res) => {
+  try {
+    const clients = await clientModel.find();
+    console.log("clien",clients)
+    return res.status(200).send(clients);
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
+// { id:req.query.clientid, clienteName: req.query.clientName,}
 
 //calculate profit
 router.get("/V1/getprofit/:projectDetailId", async (req, res) => {

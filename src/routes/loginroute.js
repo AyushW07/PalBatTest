@@ -22,7 +22,7 @@ router.post("/V1/user", async (req, res) => {
   }
 });
 
-router.post("/V1/login", async (req, res) => {
+router.post("/V1/loginuser", async (req, res) => {
   try {
     let body = req.body;
     if (Object.keys(body).length > 0) {
@@ -64,7 +64,7 @@ router.post("/V1/login", async (req, res) => {
         { expiresIn: "12hrs" }
       );
       console.log(req.session);
-      console.log(token);
+      // console.log(token);
 
       res.status(200).setHeader("x-api-key", token);
       return res.status(201).send({ status: "loggedin", token: token });

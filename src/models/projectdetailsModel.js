@@ -36,11 +36,11 @@ const projectSchema = new mongoose.Schema(
     },
     services: {
       type: String,
-      enum: ["Development", "Designing", "Marketing", "Hosting"],
+      // enum: ["Development", "Designing", "Marketing", "Hosting"],
     },
     Status: {
       type: String,
-      enum: ["inProcess", "completed", "notStarted"],
+      // enum: ["In Progress", "Completed", "Not Started"],
     },
     proForma: {
       type: Number,
