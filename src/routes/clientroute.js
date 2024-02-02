@@ -5,7 +5,7 @@ const router = express.Router();
 const multer = require("multer");
 const projectdetailsModel = require("../models/projectdetailsModel");
 const hoursModel = require("../models/hoursModel");
-const projectExpenseModel = require("../models/projectExpenseModel");
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -60,6 +60,7 @@ router.post("/V1/client", upload.single("Photo"), async (req, res) => {
     return res.status(201).send({
       status: true,
       message: "client created successfully",
+    
       data: {
         ...clientDetail.toObject(),
         accountNumber: maskString(clientDetail.accountNumber.toString()),
@@ -122,59 +123,20 @@ router.get("/V1/getcdueclient/:clientid", async (req, res) => {
 router.get("/V1/getdatas/:clientid", async (req, res) => {
   try {
     const clientid = req.params.clientid;
-    const selectClients = req.body.selectClients;
-
-    const projects = await projectdetailsModel.find({
+   const projects = await projectdetailsModel.find({
       clientid: clientid,
-      selectClients: selectClients,
       isDeleted: false,
     });
-    console.log("ss", projects);
-    if (!projects || projects.length === 0) {
-      return res.status(404).send({
-        status: "failed",
-        message: `No projects found for this Client ID`,
-      });
-    }
-
-    let totalRevenue = 0;
-    let totalProfit = 0;
-    for (const project of projects) {
-      totalRevenue += project.sellingPrice;
-
-      console.log(`Fetching hours for project ID: ${project.id}`);
-      const hoursDetails = await hoursModel.find({
-        projectDetailId: project.projectDetailId, // Ensure this field matches your project ID
-        isDeleted: false,
-      });
-      // console.log(`Hours details:`, hoursDetails);
-
-      let totalCostHour = 0;
-      hoursDetails.forEach((hour) => {
-        totalCostHour += hour.costhour;
-      });
-
-      console.log(`Fetching expenses for project ID: ${project.id}`);
-      let projectExpenses = await projectExpenseModel.find({
-        projectDetailId: project.id, // Ensure this field matches your project ID
-        isDeleted: false,
-      });
-      // console.log(`Project expenses:`, projectExpenses);
-
-      let totalExpense = 0;
-      projectExpenses.forEach((expense) => {
-        totalExpense += expense.amount;
-      });
-
-      let totalCost = totalExpense + totalCostHour;
-
-      let profit = project.sellingPrice - totalCost;
-      totalProfit += profit;
-    }
-
+    let netprofit = 0;
+    let sellingprice= 0;
+    projects.forEach(project =>{
+      netprofit+=project.totalprojectProfit || 0
+      sellingprice+=project.sellingPrice
+    })
+    
     return res.status(200).send({
-      totalRevenue: totalRevenue,
-      totalProfit: totalProfit,
+      netprofit,
+      sellingprice
     });
   } catch (error) {
     console.error("Error:", error);

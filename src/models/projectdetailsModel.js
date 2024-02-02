@@ -17,10 +17,14 @@ const projectSchema = new mongoose.Schema(
       type: String,
     },
     startingDate: {
-      type: Date,
+      type: String,
+    },
+    projectExpenses:{
+      type:[Object],
+      default:[]
     },
     completionDate: {
-      type: Date,
+      type: String,
     },
     sellingPrice: {
       type: Number,
@@ -55,6 +59,14 @@ const projectSchema = new mongoose.Schema(
       type: Number,
     },
 
+    totalprojectProfit:{
+      type:Number,
+      default:0,
+    },
+    totalexpense:{
+      type:Number,
+      default:0,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

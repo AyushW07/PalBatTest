@@ -2,6 +2,7 @@ const express = require("express");
 const memberModel = require("../models/memberModel");
 const hoursModel = require("../models/hoursModel");
 const projectExpenseModel = require("../models/projectExpenseModel");
+const projectdetailsModel = require("../models/projectdetailsModel");
 const router = express.Router();
 
 router.post("/V1/hoursData", async (req, res) => {
@@ -39,6 +40,7 @@ router.post("/V1/hoursData", async (req, res) => {
 router.get("/V1/gethourDataWithTotalCosts", async (req, res) => {
   try {
     const hoursDetails = await hoursModel.find({ isDeleted: false });
+    const expensesDetails = await memberModel.find();
     let projectDetailId = hoursDetails[hoursDetails.length - 1].projectDetailId;
     // console.log("p", projectDetailId);
     let totalcosthour = 0;
@@ -57,6 +59,7 @@ router.get("/V1/gethourDataWithTotalCosts", async (req, res) => {
     return res.status(200).send({
       totalcost,
       hoursDetails,
+      expensesDetails
     });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
@@ -75,7 +78,7 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
         .status(400)
         .send({ status: false, msg: "Hoursday is required" });
     }
-
+console.log("hou",hoursid)
     // Find the hour entry
     const hourEntry = await hoursModel.findOne({
       id: hoursid,
@@ -106,11 +109,25 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
         $set: {
           totalHours: newTotalHours,
           costhour: newCosthour,
+          Hoursday:Hoursday
         },
       },
       { new: true, runValidators: true }
     );
 
+    const projectModel= await projectdetailsModel.findOne({id:updatedData.projectDetailId})
+    let totalExpensive=0
+    projectModel.projectExpenses.forEach((project)=>{
+      totalExpensive+=project.amount
+      
+    })
+    console.log("expense",totalExpensive)
+    let sellingPrice=projectModel?.sellingPrice
+    let totalCostHours=updatedData?.costhour
+    console.log("c",sellingPrice,totalCostHours,totalExpensive)
+    let totalProfit =Math.abs(sellingPrice-(totalExpensive+totalCostHours));
+   
+    await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit,totalexpense:totalExpensive}}, {new:true} )
     if (!updatedData) {
       return res
         .status(404)

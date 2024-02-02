@@ -30,11 +30,11 @@ const clientSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Complete", "Ongoing", "Not Started", "awaiting pay"],
+      // enum: ["Complete", "Ongoing", "Not Started", "awaiting pay"],
     },
     Poc: {
       type: String,
-      enum: ["Jyoti", "Abhishek", "Rishab", "Srivatsva"],
+      // enum: ["Jyoti", "Abhishek", "Rishab", "Srivatsva"],
     },
     bankName: {
       type: String,
@@ -56,16 +56,16 @@ const clientSchema = new mongoose.Schema(
     panNumber: {
       type: String,
       required: true,
-      // match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please fill a valid PAN number"],
+      //  match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please fill a valid PAN number"],
     },
     accountType: {
       type: String,
-      enum: ["Saving", "Current"],
+      // enum: ["Saving", "Current"],
     },
     IFSCCode: {
       type: String,
       required: true,
-      // match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
+      //  match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
     },
     isDeleted: {
       type: Boolean,

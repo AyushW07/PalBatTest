@@ -22,9 +22,11 @@ router.post("/V1/proDetails", async (req, res) => {
       Status,
       proForma,
       losses,
-
+      projectExpenses,
       invoice,
       GSTCGST,
+   
+     
     } = Data;
     if (
       (!projectName,
@@ -40,7 +42,9 @@ router.post("/V1/proDetails", async (req, res) => {
       !proForma,
       !invoice,
       !losses,
-      !GSTCGST)
+      !projectExpenses,
+      !GSTCGST
+      )
     )
       return res
         .status(400)
@@ -70,76 +74,14 @@ router.get("/V1/getallData", async (req, res) => {
  router.get("/V1/getclient", async (req, res) => {
   try {
     const clients = await clientModel.find();
-    console.log("clien",clients)
+    // console.log("clien",clients)
     return res.status(200).send(clients);
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
 
-// { id:req.query.clientid, clienteName: req.query.clientName,}
 
-//calculate profit
-router.get("/V1/getprofit/:projectDetailId", async (req, res) => {
-  try {
-    const projectDetailId = req.params.projectDetailId; // Get projectDetailId from URL params
-
-    // Fetch the project details
-    const projectDetails = await projectdetailsModel.findOne({
-      id: projectDetailId,
-      isDeleted: false,
-    });
-    if (!projectDetails) {
-      return res
-        .status(404)
-        .send({ status: false, message: "Project not found" });
-    }
-
-    // Fetch hour entries related to the project
-    const hoursDetails = await hoursModel.find({
-      projectDetailId: projectDetailId,
-      isDeleted: false,
-    });
-    let totalCostHour = 0;
-    hoursDetails.forEach((hour) => {
-      totalCostHour += hour.costhour;
-    });
-
-    // Fetch expenses related to the project
-    let projectExpenses = await projectExpenseModel.find({
-      projectDetailId: projectDetailId,
-      isDeleted: false,
-    });
-    let totalExpense = 0;
-    projectExpenses.forEach((expense) => {
-      totalExpense += expense.amount;
-    });
-
-    // Calculate total cost for the project (employee costs + project expenses)
-    let totalCost = totalExpense + totalCostHour;
-
-    // Calculate profit for the project
-    let profit = projectDetails.sellingPrice - totalCost;
-
-    // if (profit < 0) {
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, message: `Project losses ${profit}` });
-    // }
-    return res.status(200).send({
-      status: true,
-      projectDetailId: projectDetailId,
-      sellingPrice: projectDetails.sellingPrice,
-      totalCostHour: totalCostHour,
-      totalExpense: totalExpense,
-      totalCost: totalCost,
-      profit: profit,
-      projectName: projectDetails.projectName,
-    });
-  } catch (error) {
-    return res.status(500).send({ status: false, message: error.message });
-  }
-});
 
 // calculate the total amount Total amount spend on projects due on the project,gstcgst,amount generated
 router.get("/V1/getallamount", async (req, res) => {
@@ -155,8 +97,10 @@ router.get("/V1/getallamount", async (req, res) => {
 
     projectDetails.forEach((project) => {
       totalAmountGenerated += project.sellingPrice;
-      const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
-      totalGSTCGST += project.sellingPrice * gstPercentage;
+      if (project.GSTCGST && project.GSTCGST.trim() !== "") {
+        const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
+        totalGSTCGST += project.sellingPrice * gstPercentage;
+      }
     });
 
     let totalcollectiondue = 0;
