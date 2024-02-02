@@ -28,16 +28,16 @@ const hourSchema = new mongoose.Schema(
     },
     jobRole: {
       type: String,
-      enum: [
-        "Senior Developer",
-        "Frontend Developer",
-        "Backend Developer",
-        "Desining",
-        "UI/UX",
-        "Graphic Designer",
-        "Bussiness devlopment",
-        "sales",
-      ],
+      // enum: [
+      //   "Senior Developer",
+      //   "Frontend Developer",
+      //   "Backend Developer",
+      //   "Desining",
+      //   "UI/UX",
+      //   "Graphic Designer",
+      //   "Bussiness devlopment",
+      //   "sales",
+      // ],
     },
     hourCost: {
       type: Number,
