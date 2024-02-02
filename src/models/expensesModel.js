@@ -14,7 +14,7 @@ const expensesSchema = new mongoose.Schema(
       type: Number,
     },
     selectDate: {
-      type: Date,
+      type: String,
     },
     byWhom: {
       type: String,
