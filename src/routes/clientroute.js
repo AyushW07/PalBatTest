@@ -102,6 +102,14 @@ router.get("/V1/getcdueclient/:clientid", async (req, res) => {
       overallDue += project.collectiondue;
     });
 
+//client projects history
+    const clientallProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
+      .select('projectName sellingPrice -id');
+      const projectsSummary = clientallProjects.map(project => ({
+        projectName: project.projectName,
+        sellingPrice: project.sellingPrice
+      }));
+
     let numberOfProjects = clientProjects.length;
     const clientSummary = {
       clientId: client.id,
@@ -109,6 +117,7 @@ router.get("/V1/getcdueclient/:clientid", async (req, res) => {
       overallCollection,
       overallDue,
       numberOfProjects,
+      projects: projectsSummary
     };
 
     return res.status(200).send({ status: true, clientSummary });
