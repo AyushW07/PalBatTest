@@ -118,10 +118,20 @@ router.get("/V1/getcdueclient/:clientid", async (req, res) => {
   }
 });
 
+
+router.get("/V1/getclient", async (req, res) => {
+  try {
+    const clientDetails = await clientModel.find();
+    return res.status(200).send(clientDetails);
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
 //calculate netprofit and overallmoney overallDue
 
 router.get("/V1/getdatas/:clientid", async (req, res) => {
   try {
+    
     const clientid = req.params.clientid;
    const projects = await projectdetailsModel.find({
       clientid: clientid,

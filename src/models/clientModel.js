@@ -38,7 +38,7 @@ const clientSchema = new mongoose.Schema(
     },
     bankName: {
       type: String,
-      required: true,
+    
     },
     accholderName: {
       type: String,

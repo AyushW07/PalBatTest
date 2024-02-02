@@ -111,7 +111,7 @@ router.put("/V1/updateexpense/:expenseid", async (req, res) => {
   }
 });
 
-router.delete("/V1/expensesDelate", async (req, res) => {
+router.delete("/V1/expensesDelete", async (req, res) => {
   try {
     const result = await expensesModel.deleteMany({});
     res.send(`Deleted ${result.deletedCount} expensedata`);
@@ -123,37 +123,21 @@ router.delete("/V1/expensesDelate", async (req, res) => {
   }
 });
 
-router.delete("/V1/expensesDelate/:expenseid", async (req, res) => {
+
+
+
+router.delete("/V1/expensesDelete/:id", async (req, res) => {
   try {
-    let expensesid = req.params.expenseid;
-
-    expensesid = Number(expensesid);
-    const page = await expensesModel.findOne({
-      id: expensesid,
-      isDeleted: false,
-    });
-    // if (!page) {
-    //   return res
-    //     .status(404)
-    //     .send({ status: false, message: `Page not found or already deleted` });
-    // }
-    const data = await expensesModel.findOneAndDelete({ id: expensesid });
-
-    return res.status(200).send(data);
+    const id = req.params.id;
+    const member = await expensesModel.findOne({ id: id });
+    if (!member) {
+      return res.status(404).send({ status: false, message: `expense not found or already deleted` });
+    }
+    const deletedData = await expensesModel.findOneAndDelete({ id: id });
+    return res.status(200).send(deletedData);
   } catch (err) {
-    return res
-      .status(500)
-      .send({ status: false, msg: "Server error", error: err.message });
+    return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
 
-// router.get("/V1/getexpenseData", async (req, res) => {
-//   try {
-//     const client = await clientModel.find();
-//     const member = await memberModel.find();
-//     return res.status(200).send({ client, member });
-//   } catch (error) {
-//     return res.status(500).send({ status: false, message: error.message });
-//   }
-// });
 module.exports = router;
