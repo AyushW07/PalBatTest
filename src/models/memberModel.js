@@ -21,33 +21,14 @@ const membersSchema = new mongoose.Schema(
     },
     jobRole: {
       type: String,
-      // enum: [
-      //   "Senior Developer",
-      //   "Frontend Developer",
-      //   "Backend Developer",
-      //   "Desining",
-      //   "UI/UX",
-      //   "Graphic Designer",
-      //   "Bussiness devlopment",
-      //   "sales",
-      // ],
     },
     department: {
       type: String,
-      // enum: ["Maarketing", "Development", "Designing"],
+     
     },
     position: {
       type: String,
-      // enum: [
-      //   "Senior Developer",
-      //   "Frontend Developer",
-      //   "Backend Developer",
-      //   "Desining",
-      //   "UI/UX",
-      //   "Graphic Designer",
-      //   "Bussiness devlopment",
-      //   "sales",
-      // ],
+     
     },
     joiningDate: {
       type: String,

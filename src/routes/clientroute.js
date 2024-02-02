@@ -73,59 +73,64 @@ router.post("/V1/client", upload.single("Photo"), async (req, res) => {
   }
 });
 
-//calculate overall colllection and overall due
-router.get("/V1/getcdueclient/:clientid", async (req, res) => {
+//show the popupof projectHistory  with projectName and selling price 
+router.get("/V1/getClientProjects/:clientid", async (req, res) => {
   try {
     const clientid = req.params.clientid;
-    const client = await clientModel.findOne({
-      id: clientid,
-      isDeleted: false,
-    });
+    const client = await clientModel.findOne({ id: clientid, isDeleted: false });
 
     if (!client) {
-      return res
-        .status(404)
-        .send({ status: "failed", message: "Client not found" });
+      return res.status(404).send({ status: "failed", message: "Client not found" });
     }
 
-    const clientProjects = await projectdetailsModel.find({
-      clientid: clientid, // Use 'clientid' to relate projects to clients
+    
+    const clientProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
+      .select('projectName sellingPrice -_id'); 
 
-      isDeleted: false,
-    });
+    const projectsSummary = clientProjects.map(project => ({
+      projectName: project.projectName,
+      sellingPrice: project.sellingPrice
+    }));
 
-    let overallCollection = 0;
-    let overallDue = 0;
-
-    clientProjects.forEach((project) => {
-      overallCollection += project.sellingPrice;
-      overallDue += project.collectiondue;
-    });
-
-//client projects history
-    const clientallProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
-      .select('projectName sellingPrice -id');
-      const projectsSummary = clientallProjects.map(project => ({
-        projectName: project.projectName,
-        sellingPrice: project.sellingPrice
-      }));
-
-    let numberOfProjects = clientProjects.length;
-    const clientSummary = {
-      clientId: client.id,
-      clientName: client.clienteName,
-      overallCollection,
-      overallDue,
-      numberOfProjects,
-      projects: projectsSummary
-    };
-
-    return res.status(200).send({ status: true, clientSummary });
+    return res.status(200).send({ status: true, projects: projectsSummary });
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
+
+
+//calculate overall colllection and overall due
+router.get("/V1/getOverallCollectionAndDue", async (req, res) => {
+  try {
+    // Fetch all projects that are not deleted
+    const projects = await projectdetailsModel.find({ isDeleted: false });
+
+    let overallCollection = 0;
+    let overallDue = 0;
+
+    // Iterate through all projects and accumulate the collection and due amounts
+    projects.forEach((project) => {
+      overallCollection += project.sellingPrice;
+      overallDue += project.collectiondue;
+    });
+
+    const numberOfProjects = projects.length;
+    
+    const summary = {
+      overallCollection,
+      overallDue,
+      numberOfProjects,
+    };
+
+    return res.status(200).send({ status: true, summary });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 
 
 router.get("/V1/getclient", async (req, res) => {
@@ -136,27 +141,50 @@ router.get("/V1/getclient", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-//calculate netprofit and overallmoney overallDue
 
+//calculate netprofit and overallmoney no of projects invoices proforma {clientDetails}
 router.get("/V1/getdatas/:clientid", async (req, res) => {
   try {
     
     const clientid = req.params.clientid;
+    const client = await clientModel.findOne({ id: clientid, isDeleted: false });
    const projects = await projectdetailsModel.find({
       clientid: clientid,
       isDeleted: false,
     });
     let netprofit = 0;
     let sellingprice= 0;
+    let proFormaTotal = 0;
+    let invoiceTotal = 0;
+    let firstProjectDate = null;
     projects.forEach(project =>{
       netprofit+=project.totalprojectProfit || 0
       sellingprice+=project.sellingPrice
-    })
+      proFormaTotal += project.proForma || 0; 
+      invoiceTotal += project.invoice || 0;
+      const projectDate = new Date(project.startingDate); 
+      firstProjectDate = firstProjectDate === null ? projectDate : (projectDate < firstProjectDate ? projectDate : firstProjectDate);
+    });
+    const numberOfProjects = projects.length;
+    const bankDetails = {
+      bankName: client.bankName,
+      accholderName:client.accholderName,
+      accountNumber: client.accountNumber,
+      GSTCGST: client.GSTCGST,
+      panNumber: client.panNumber,
+      accountType: client.accountType,
+      IFSCCode: client.IFSCCode
+    };
     
     return res.status(200).send({
       netprofit,
-      sellingprice
+      sellingprice,numberOfProjects,
+      proFormaTotal,
+      invoiceTotal,
+      bankDetails,
+      firstProjectDate: firstProjectDate ? firstProjectDate.toISOString().split('T')[0] : null // Format date as YYYY-MM-DD
     });
+  
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
@@ -199,29 +227,17 @@ router.delete("/V1/clientDelate", async (req, res) => {
   }
 });
 
-router.delete("/V1/clientprojectDelate/:clientid", async (req, res) => {
+router.delete("/V1/clientprojectDelate/:id", async (req, res) => {
   try {
-    let clientid = req.params.clientid;
-
-    clientid = Number(clientid);
-    const page = await clientModel.findOne({
-      id: clientid,
-      isDeleted: false,
-    });
-    if (!page) {
-      return res
-        .status(404)
-        .send({ status: false, message: `Page not found or already deleted` });
+    const id = req.params.id;
+    const member = await clientModel.findOne({ id: id });
+    if (!member) {
+      return res.status(404).send({ status: false, message: `Member not found or already deleted` });
     }
-    await clientModel.findOneAndDelete({ id: clientid });
-
-    return res
-      .status(200)
-      .send({ status: true, message: `Data deleted successfully.` });
+    const deletedData = await clientModel.findOneAndDelete({ id: id });
+    return res.status(200).send(deletedData);
   } catch (err) {
-    return res
-      .status(500)
-      .send({ status: false, msg: "Server error", error: err.message });
+    return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
 

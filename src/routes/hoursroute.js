@@ -78,7 +78,7 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
         .status(400)
         .send({ status: false, msg: "Hoursday is required" });
     }
-console.log("hou",hoursid)
+
     // Find the hour entry
     const hourEntry = await hoursModel.findOne({
       id: hoursid,
@@ -121,13 +121,18 @@ console.log("hou",hoursid)
       totalExpensive+=project.amount
       
     })
-    console.log("expense",totalExpensive)
+    // console.log("expense",totalExpensive)
     let sellingPrice=projectModel?.sellingPrice
     let totalCostHours=updatedData?.costhour
     console.log("c",sellingPrice,totalCostHours,totalExpensive)
     let totalProfit =Math.abs(sellingPrice-(totalExpensive+totalCostHours));
-   
-    await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit,totalexpense:totalExpensive}}, {new:true} )
+    console.log("p",totalProfit)
+   if(projectModel.totalprojectProfit>0){
+      await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:updatedData.costhour*parseInt(Hoursday),totalexpense:totalExpensive}}, {new:true} )
+   }else{
+
+     await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit,totalexpense:totalExpensive}}, {new:true} )
+   }
     if (!updatedData) {
       return res
         .status(404)
@@ -153,6 +158,20 @@ router.delete("/V1/hoursDelate", async (req, res) => {
     res
       .status(500)
       .send({ status: false, msg: "server error", error: err.message });
+  }
+});
+
+router.delete("/V1/hoursDelete/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const hours = await hoursModel.findOne({ id: id });
+    if (!hours) {
+      return res.status(404).send({ status: false, message: `hours not found or already deleted` });
+    }
+    const deletedData = await hoursModel.findOneAndDelete({ id: id });
+    return res.status(200).send(deletedData);
+  } catch (err) {
+    return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
 

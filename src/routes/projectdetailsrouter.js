@@ -184,29 +184,17 @@ router.delete("/V1/projectDelate", async (req, res) => {
   }
 });
 
-router.delete("/V1/projectDelate/:projectDetailId", async (req, res) => {
+router.delete("/V1/projectDelate/:id", async (req, res) => {
   try {
-    let projectDetailId = req.params.projectDetailId;
-
-    projectDetailId = Number(projectDetailId);
-    const page = await projectdetailsModel.findOne({
-      id: projectDetailId,
-      isDeleted: false,
-    });
-    if (!page) {
-      return res
-        .status(404)
-        .send({ status: false, message: `Page not found or already deleted` });
+    const id = req.params.id;
+    const project = await projectdetailsModel.findOne({ id: id });
+    if (!project) {
+      return res.status(404).send({ status: false, message: `project not found or already deleted` });
     }
-    await projectdetailsModel.findOneAndDelete({ id: projectDetailId });
-
-    return res
-      .status(200)
-      .send({ status: true, message: `Data deleted successfully.` });
+    const deletedData = await projectdetailsModel.findOneAndDelete({ id: id });
+    return res.status(200).send(deletedData);
   } catch (err) {
-    return res
-      .status(500)
-      .send({ status: false, msg: "Server error", error: err.message });
+    return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
 

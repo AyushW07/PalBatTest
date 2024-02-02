@@ -111,87 +111,32 @@ router.get("/V1/member/:memberid", async (req, res) => {
   }
 });
 
-// router.get("/V1/employeeMonthlySummary/:memberid", async (req, res) => {
+
+
+// router.get("/V1/employeeMonthlySummary", async (req, res) => {
 //   try {
-//     const memberid = req.params.memberid;
-//     console.log("m", memberid);
-//     const queryMonth = parseInt(req.query.month);
-//     const queryYear = parseInt(req.query.year);
-
-//     // Set current date, month and year if not provided
-//     const currentDate = new Date();
-//     const year = isNaN(queryYear) ? currentDate.getFullYear() : queryYear;
-//     const month = isNaN(queryMonth) ? currentDate.getMonth() : queryMonth - 1;
-
-//     // Define the start and end of the month
-//     const firstDayOfMonth = new Date(year, month, 1);
-//     const lastDayOfMonth = new Date(year, month + 1, 0);
-
-//     // Fetch the member details
-//     console.log("aa", memberid);
-//     const member = await memberModel.findOne({ id: memberid });
-//     console.log("mIN", member);
-//     if (!member) {
-//       return res
-//         .status(404)
-//         .send({ status: false, message: "Member not found" });
-//     }
-
-//     // Aggregate the total hours for the member within the month
-//     const hoursAggregation = await hoursModel.aggregate([
-//       {
-//         $match: {
-//           memberid: memberid, // Ensure the memberid matches
-//           selectDate: { $gte: firstDayOfMonth, $lte: lastDayOfMonth },
-//           isDeleted: false,
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           totalHours: { $sum: "$totalHours" },
-//         },
-//       },
-//     ]);
-
-//     const totalHours =
-//       hoursAggregation.length > 0 ? hoursAggregation[0].totalHours : 0;
-//     const thisMonthCost = totalHours * member.hourCost; // Calculate this month's cost
+//     const hoursDetails = await hoursModel.find({ isDeleted: false });
+//     console.log("h", hoursDetails);
+//     let projectDetailId = hoursDetails[hoursDetails.length - 1].projectDetailId;
+//     let totalcosthour = 0;
+//     let hoursdata = 0;
+//     hoursDetails.forEach((element) => {
+//       totalcosthour += element.hourCost;
+//       hoursdata += element.totalHours;
+//     });
+//     const member = await memberModel.findOne({ projectDetailId });
+//     const hourCost = member ? member.hourCost : 0;
+//     let totalcostmonth = hourCost * totalHours;
 
 //     return res.status(200).send({
-//       status: true,
-//       employeeMonthlySummary: {
-//         memberid: memberid,
-//         employeName: member.employeName,
-//         totalHours: totalHours,
-//         thisMonthCost: thisMonthCost,
-//       },
+//       totalcostmonth,
 //     });
 //   } catch (error) {
 //     return res.status(500).send({ status: false, message: error.message });
 //   }
 // });
 
-router.get("/V1/employeeMonthlySummary", async (req, res) => {
-  try {
-    const hoursDetails = await hoursModel.find({ isDeleted: false });
-    console.log("h", hoursDetails);
-    let projectDetailId = hoursDetails[hoursDetails.length - 1].projectDetailId;
-    let totalcosthour = 0;
-    let hoursdata = 0;
-    hoursDetails.forEach((element) => {
-      totalcosthour += element.hourCost;
-      hoursdata += element.totalHours;
-    });
-    let totalcostmonth = hourCost * totalHours;
 
-    return res.status(200).send({
-      totalcostmonth,
-    });
-  } catch (error) {
-    return res.status(500).send({ status: false, message: error.message });
-  }
-});
 router.put("/V1/updatemember/:memberid", async (req, res) => {
   try {
     const memberid = req.params.memberid;
