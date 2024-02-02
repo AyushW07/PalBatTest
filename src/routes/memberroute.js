@@ -6,7 +6,11 @@ const multer = require("multer");
 const hoursModel = require("../models/hoursModel");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
 function maskString(str, visibleCount = 2) {
+  if (typeof str !== 'string' || str === undefined) {
+    return '****';
+  }
   return (
     str.slice(0, -visibleCount).replace(/./g, "*") + str.slice(-visibleCount)
   );
@@ -16,6 +20,7 @@ router.post("/V1/member", upload.single("Photo"), async (req, res) => {
     const {
       employeName,
       photo,
+      description,
       jobRole,
       department,
       position,
@@ -32,26 +37,27 @@ router.post("/V1/member", upload.single("Photo"), async (req, res) => {
 
       IFSCCode,
     } = req.body;
-    if (
-      (!employeName,
-      !photo,
-      !jobRole,
-      !department,
-      !position,
-      !joiningDate,
-      !ctc,
-      !hourCost,
-      !bankName,
-      !accholderName,
-      !GSTCGST,
-      !panNumber,
-      !accountNumber,
-      !accountType,
-      !IFSCCode)
-    )
-      return res
-        .status(400)
-        .send({ status: false, message: "All fields are required" });
+    // if (
+    //   (!employeName,
+    //     !photo,
+    //     !description,
+    //     !jobRole,
+    //     !department,
+    //     !position,
+    //     !joiningDate,
+    //     !ctc,
+    //     !hourCost,
+    //     !bankName,
+    //     !accholderName,
+    //     !GSTCGST,
+    //     !panNumber,
+    //     !accountNumber,
+    //     !accountType,
+    //     !IFSCCode)
+    // )
+    //   return res
+    //     .status(400)
+    //     .send({ status: false, message: "All fields are required" });
 
     const memberDetail = new memberModel(req.body);
 
@@ -84,6 +90,22 @@ router.get("/V1/getmemberData", async (req, res) => {
   try {
     const expensesDetails = await memberModel.find();
     return res.status(200).send(expensesDetails);
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
+router.get("/V1/member/:memberid", async (req, res) => {
+  try {
+    const memberid = req.params.memberid;
+
+    const projectId = await memberModel.findOne({
+      id: memberid,
+      // isDeleted: false,
+    });
+    return res
+      .status(200)
+      .send({ status: true, msg: "Data fetch succesfully", data: projectId });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -190,7 +212,7 @@ router.put("/V1/updatemember/:memberid", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-router.delete("/V1/memberDelate", async (req, res) => {
+router.delete("/V1/memberDelete", async (req, res) => {
   try {
     const result = await memberModel.deleteMany({});
     res.send(`Deleted ${result.deletedCount} homedata`);
@@ -200,28 +222,19 @@ router.delete("/V1/memberDelate", async (req, res) => {
   }
 });
 
-router.delete("/V1/memberDelate/:memberid", async (req, res) => {
+router.delete("/V1/memberDelete/:id", async (req, res) => {
   try {
-    let memberid = req.params.memberid;
-
-    memberid = Number(memberid);
-    const page = await memberModel.findOne({
-      id: memberid,
-      isDeleted: false,
-    });
-    if (!page) {
-      return res
-        .status(404)
-        .send({ status: false, message: `Page not found or already deleted` });
+    const id = req.params.id;
+    const member = await memberModel.findOne({ id: id });
+    if (!member) {
+      return res.status(404).send({ status: false, message: `Member not found or already deleted` });
     }
-    const deletData = await memberModel.findOneAndDelete({ id: memberid });
-
-    return res.status(200).send(deletData);
+    const deletedData = await memberModel.findOneAndDelete({ id: id });
+    return res.status(200).send(deletedData);
   } catch (err) {
-    return res
-      .status(500)
-      .send({ status: false, msg: "Server error", error: err.message });
+    return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
+
 
 module.exports = router;

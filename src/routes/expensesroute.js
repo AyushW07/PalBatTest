@@ -6,10 +6,20 @@ const projectdetailsModel = require("../models/projectdetailsModel");
 const hoursModel = require("../models/hoursModel");
 const router = express.Router();
 
+router.get("/V1/getAllExpenses", async (req, res) => {
+  try {
+    const expenses = await expensesModel.find({ isDeleted: false });
+    res.status(200).send(expenses);
+  } catch (error) {
+    res.status(500).send({ status: false, message: error.message });
+  }
+});
+
+
 router.post("/V1/expensesdata", async (req, res) => {
   try {
     const { expenseName, addAmount, selectDate, byWhom, addReason } = req.body;
-    if ((!expenseName, !addAmount, !selectDate, !byWhom, !addReason))
+    if (!expenseName || !addAmount || !selectDate || !byWhom || !addReason)
       return res
         .status(400)
         .send({ status: false, message: "All fields are required" });
@@ -37,7 +47,7 @@ router.get("/V1/monthlyProfitSummary", async (req, res) => {
     // Calculate total selling price and collection due from projects
     projects.forEach((project) => {
       totalSellingPrice += project.sellingPrice;
-      totalCollectionDue += project.collectiondue;
+      totalCollectionDue += project.collectiondue;   //Overall due this month
     });
 
     // Calculate total cost from hours
@@ -47,11 +57,11 @@ router.get("/V1/monthlyProfitSummary", async (req, res) => {
 
     // Calculate total expenses
     expenses.forEach((expense) => {
-      totalExpenses += expense.addAmount; // Make sure 'addAmount' is the correct field
+      totalExpenses += expense.addAmount; //Amount spent this month
     });
 
     // Calculate total profit
-    const totalProfit = totalSellingPrice - (totalCost + totalExpenses);
+    const totalProfit = Math.abs(totalSellingPrice - (totalCost + totalExpenses)); //Total profits this month
 
     return res.status(200).send({
       status: true,
@@ -122,11 +132,11 @@ router.delete("/V1/expensesDelate/:expenseid", async (req, res) => {
       id: expensesid,
       isDeleted: false,
     });
-    if (!page) {
-      return res
-        .status(404)
-        .send({ status: false, message: `Page not found or already deleted` });
-    }
+    // if (!page) {
+    //   return res
+    //     .status(404)
+    //     .send({ status: false, message: `Page not found or already deleted` });
+    // }
     const data = await expensesModel.findOneAndDelete({ id: expensesid });
 
     return res.status(200).send(data);
