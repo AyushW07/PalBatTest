@@ -212,7 +212,7 @@ router.put("/V1/updatemember/:memberid", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-router.delete("/V1/memberDelate", async (req, res) => {
+router.delete("/V1/memberDelete", async (req, res) => {
   try {
     const result = await memberModel.deleteMany({});
     res.send(`Deleted ${result.deletedCount} homedata`);
