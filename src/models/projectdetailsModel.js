@@ -23,6 +23,10 @@ const projectSchema = new mongoose.Schema(
       type:[Object],
       default:[]
     },
+    projectMembers:{
+      type:[Object],
+      default:[]
+    },
     completionDate: {
       type: String,
     },

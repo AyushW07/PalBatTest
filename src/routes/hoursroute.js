@@ -128,10 +128,10 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
     let totalProfit =Math.abs(sellingPrice-(totalExpensive+totalCostHours));
     console.log("p",totalProfit)
    if(projectModel.totalprojectProfit>0){
-      await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:updatedData.costhour*parseInt(Hoursday),totalexpense:totalExpensive}}, {new:true} )
+      await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:updatedData.costhour*parseInt(Hoursday)}}, {new:true} )
    }else{
 
-     await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit,totalexpense:totalExpensive}}, {new:true} )
+     await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit}}, {new:true} )
    }
     if (!updatedData) {
       return res
@@ -148,6 +148,25 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
+
+
+//get hours by projectId 
+router.get("/V1/membersdata/:projectDetailId", async (req, res) => {
+  try {
+    const projectDetailId = req.params.projectDetailId;
+
+    const projectData = await hoursModel.find({
+      projectDetailId: projectDetailId,
+      // isDeleted: false,
+    });
+    console.log("P",projectData)
+    return res.status(200).send(projectData);
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 
 router.delete("/V1/hoursDelate", async (req, res) => {
   try {

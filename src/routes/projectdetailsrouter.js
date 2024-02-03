@@ -23,6 +23,7 @@ router.post("/V1/proDetails", async (req, res) => {
       proForma,
       losses,
       projectExpenses,
+      projectMembers,
       invoice,
       GSTCGST,
    
@@ -33,6 +34,7 @@ router.post("/V1/proDetails", async (req, res) => {
       !selectClients,
       !startingDate,
       !completionDate,
+      !projectMembers,
       !sellingPrice,
       !eastimatedPrice,
       !advance,
@@ -50,7 +52,14 @@ router.post("/V1/proDetails", async (req, res) => {
         .status(400)
         .send({ status: false, message: "All fields are required" });
     const projectDetail = new projectdetailsModel(Data);
-    await projectDetail.save();
+   let projectData= await projectDetail.save();
+    for(let i=0; i<projectMembers.length;i++){
+      let member = projectMembers[i]
+   
+      
+      await memberModel.findOneAndUpdate({id:member.id},{projectDetailId:projectData.id})
+    }
+
 
     return res.status(201).send(
      
@@ -84,6 +93,59 @@ router.get("/V1/getallData", async (req, res) => {
 
 
 // calculate the total amount Total amount spend on projects due on the project,gstcgst,amount generated
+// router.get("/V1/getallamount", async (req, res) => {
+//   try {
+//     const projectDetails = await projectdetailsModel.find({ isDeleted: false });
+//     if (!projectDetails || projectDetails.length === 0) {
+//       return res
+//         .status(404)
+//         .send({ status: false, message: "No projects found" });
+//     }
+//     //total amount generated 
+//     let totalAmountGenerated = 0;
+//     let totalGSTCGST = 0;
+
+//     projectDetails.forEach((project) => {
+//       totalAmountGenerated += project.sellingPrice;
+//       if (project.GSTCGST && project.GSTCGST.trim() !== "") {
+//         const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
+//         totalGSTCGST += project.sellingPrice * gstPercentage;
+//       }
+//     });
+// //total amount due 
+//     let totalcollectiondue = 0;
+//     projectDetails.forEach((project) => {
+//       totalcollectiondue += project.collectiondue;
+//     });
+// //total cost of al the project
+//     const hoursDetails = await hoursModel.find({ isDeleted: false });
+//     let totalhours = 0;
+//     hoursDetails.forEach((hours) => {
+//       totalhours += hours.costhour;
+//     });
+//     const projectExpenses = await projectExpenseModel.find({
+//       isDeleted: false,
+//     });
+//     let totalExpense = 0;
+//     projectExpenses.forEach((expense) => {
+//       totalExpense += expense.amount;
+//     });
+//     let totalcost = totalhours + totalExpense;
+
+//     return res.status(200).send({
+//       status: true,
+//       projectDetails,
+//       totalAmountGenerated,
+//       totalcollectiondue,
+//       totalcost,
+//       totalGSTCGST,
+//     });
+//   } catch (error) {
+//     return res.status(500).send({ status: false, message: error.message });
+//   }
+// });
+
+
 router.get("/V1/getallamount", async (req, res) => {
   try {
     const projectDetails = await projectdetailsModel.find({ isDeleted: false });
@@ -92,35 +154,34 @@ router.get("/V1/getallamount", async (req, res) => {
         .status(404)
         .send({ status: false, message: "No projects found" });
     }
+    // Total amount generated
     let totalAmountGenerated = 0;
     let totalGSTCGST = 0;
+    // Total collection due
+    let totalcollectiondue = 0;
+    // Total expenses for all projects
+    let totalExpenses = 0;
 
     projectDetails.forEach((project) => {
+      // Calculate total amount generated and GST
       totalAmountGenerated += project.sellingPrice;
       if (project.GSTCGST && project.GSTCGST.trim() !== "") {
         const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
         totalGSTCGST += project.sellingPrice * gstPercentage;
       }
-    });
 
-    let totalcollectiondue = 0;
-    projectDetails.forEach((project) => {
+      // Calculate total collection due
       totalcollectiondue += project.collectiondue;
+
+      // Calculate total expenses for the project
+      // Assuming project.projectExpenses is an array of objects and each has an amount field
+      project.projectExpenses.forEach(expense => {
+        totalExpenses += expense.amount;
+      });
     });
 
-    const hoursDetails = await hoursModel.find({ isDeleted: false });
-    let totalhours = 0;
-    hoursDetails.forEach((hours) => {
-      totalhours += hours.costhour;
-    });
-    const projectExpenses = await projectExpenseModel.find({
-      isDeleted: false,
-    });
-    let totalExpense = 0;
-    projectExpenses.forEach((expense) => {
-      totalExpense += expense.amount;
-    });
-    let totalcost = totalhours + totalExpense;
+    // Calculating total cost (expenses + any additional costs you need to add)
+    let totalcost = totalExpenses; // + any other costs
 
     return res.status(200).send({
       status: true,
@@ -159,12 +220,28 @@ router.put("/V1/updateData/:id", async (req, res) => {
     if (!project) {
       return res.status(404).send({ status: false, msg: "member not found" });
     }
+    let expense = req.body.projectExpenses;
+    let totalExpensive =0
+    expense.forEach(expense=>{
+      if(expense.update == true){
+
+        totalExpensive+=expense.amount || 0;
+      }
+    })
 
     const updatedData = await projectdetailsModel.findOneAndUpdate(
       { id: id },
-      { $set: req.body },
+      { $set:req.body },
       { new: true, runValidators: true }
     );
+
+     await projectdetailsModel.findOneAndUpdate(
+      { id: id },
+     {$inc:{totalprojectProfit:-totalExpensive}}
+   
+    );
+
+
 
     return res.status(200).send(updatedData);
   } catch (error) {

@@ -85,7 +85,7 @@ router.get("/V1/getClientProjects/:clientid", async (req, res) => {
 
     
     const clientProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
-      .select('projectName sellingPrice -_id'); 
+      .select('projectName sellingPrice'); 
 
     const projectsSummary = clientProjects.map(project => ({
       projectName: project.projectName,
@@ -164,6 +164,7 @@ router.get("/V1/getdatas/:clientid", async (req, res) => {
       invoiceTotal += project.invoice || 0;
       const projectDate = new Date(project.startingDate); 
       firstProjectDate = firstProjectDate === null ? projectDate : (projectDate < firstProjectDate ? projectDate : firstProjectDate);
+    
     });
     const numberOfProjects = projects.length;
     const bankDetails = {
@@ -173,7 +174,9 @@ router.get("/V1/getdatas/:clientid", async (req, res) => {
       GSTCGST: client.GSTCGST,
       panNumber: client.panNumber,
       accountType: client.accountType,
-      IFSCCode: client.IFSCCode
+      IFSCCode: client.IFSCCode,
+      description:client.description,
+      photo:client.photo,
     };
     
     return res.status(200).send({
