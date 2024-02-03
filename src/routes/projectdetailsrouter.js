@@ -71,13 +71,54 @@ projectDetail);
 
 router.get("/V1/getallData", async (req, res) => {
   try {
-    
-    const project = await projectdetailsModel.find({ isDeleted: false });
-    return res.status(200).send(project);
+    const projects = await projectdetailsModel.find({ isDeleted: false });
+
+    // Calculate total expenses for each project and add it to the project object
+    const projectsWithTotalExpenses = projects.map(project => {
+      let totalexpense = 0;
+      project.projectExpenses.forEach(expense => {
+        totalexpense += expense.amount; // assuming 'amount' is the field that stores the expense value
+      });
+
+      // Optionally, you can save the calculated totalexpense back to the database
+      // await projectdetailsModel.findByIdAndUpdate(project._id, { $set: { totalexpense: totalexpense } });
+
+      // Return the project with the calculated total expenses
+      return {
+        ...project.toObject(), // Convert Mongoose document to plain JavaScript object
+        totalexpense // Include calculated total expenses
+      };
+    });
+
+    return res.status(200).send(projectsWithTotalExpenses);
   } catch (error) {
+    console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+router.get("/V1/getallData", async (req, res) => {
+  try {
+    const projects = await projectdetailsModel.find({ isDeleted: false });
+
+    
+    const projectsWithTotalExpenses = projects.map(project => {
+      let totalexpense = 0;
+      project.projectExpenses.forEach(expense => {
+        totalexpense += expense.amount; // assuming 'amount' is the field that stores the expense value
+      });
+      return {
+        ...project.toObject(), 
+        totalexpense 
+      };
+    });
+
+    return res.status(200).send(projectsWithTotalExpenses);
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 
  //get clientName wrt to this api 
  router.get("/V1/getclient", async (req, res) => {
@@ -93,59 +134,6 @@ router.get("/V1/getallData", async (req, res) => {
 
 
 // calculate the total amount Total amount spend on projects due on the project,gstcgst,amount generated
-// router.get("/V1/getallamount", async (req, res) => {
-//   try {
-//     const projectDetails = await projectdetailsModel.find({ isDeleted: false });
-//     if (!projectDetails || projectDetails.length === 0) {
-//       return res
-//         .status(404)
-//         .send({ status: false, message: "No projects found" });
-//     }
-//     //total amount generated 
-//     let totalAmountGenerated = 0;
-//     let totalGSTCGST = 0;
-
-//     projectDetails.forEach((project) => {
-//       totalAmountGenerated += project.sellingPrice;
-//       if (project.GSTCGST && project.GSTCGST.trim() !== "") {
-//         const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
-//         totalGSTCGST += project.sellingPrice * gstPercentage;
-//       }
-//     });
-// //total amount due 
-//     let totalcollectiondue = 0;
-//     projectDetails.forEach((project) => {
-//       totalcollectiondue += project.collectiondue;
-//     });
-// //total cost of al the project
-//     const hoursDetails = await hoursModel.find({ isDeleted: false });
-//     let totalhours = 0;
-//     hoursDetails.forEach((hours) => {
-//       totalhours += hours.costhour;
-//     });
-//     const projectExpenses = await projectExpenseModel.find({
-//       isDeleted: false,
-//     });
-//     let totalExpense = 0;
-//     projectExpenses.forEach((expense) => {
-//       totalExpense += expense.amount;
-//     });
-//     let totalcost = totalhours + totalExpense;
-
-//     return res.status(200).send({
-//       status: true,
-//       projectDetails,
-//       totalAmountGenerated,
-//       totalcollectiondue,
-//       totalcost,
-//       totalGSTCGST,
-//     });
-//   } catch (error) {
-//     return res.status(500).send({ status: false, message: error.message });
-//   }
-// });
-
-
 router.get("/V1/getallamount", async (req, res) => {
   try {
     const projectDetails = await projectdetailsModel.find({ isDeleted: false });
@@ -154,34 +142,36 @@ router.get("/V1/getallamount", async (req, res) => {
         .status(404)
         .send({ status: false, message: "No projects found" });
     }
-    // Total amount generated
+    //total amount generated 
     let totalAmountGenerated = 0;
     let totalGSTCGST = 0;
-    // Total collection due
-    let totalcollectiondue = 0;
-    // Total expenses for all projects
-    let totalExpenses = 0;
 
     projectDetails.forEach((project) => {
-      // Calculate total amount generated and GST
       totalAmountGenerated += project.sellingPrice;
       if (project.GSTCGST && project.GSTCGST.trim() !== "") {
         const gstPercentage = parseFloat(project.GSTCGST.replace("%", "")) / 100;
         totalGSTCGST += project.sellingPrice * gstPercentage;
       }
-
-      // Calculate total collection due
-      totalcollectiondue += project.collectiondue;
-
-      // Calculate total expenses for the project
-      // Assuming project.projectExpenses is an array of objects and each has an amount field
-      project.projectExpenses.forEach(expense => {
-        totalExpenses += expense.amount;
-      });
     });
-
-    // Calculating total cost (expenses + any additional costs you need to add)
-    let totalcost = totalExpenses; // + any other costs
+//total amount due 
+    let totalcollectiondue = 0;
+    projectDetails.forEach((project) => {
+      totalcollectiondue += project.collectiondue;
+    });
+//total cost of al the project
+    const hoursDetails = await hoursModel.find({ isDeleted: false });
+    let totalhours = 0;
+    hoursDetails.forEach((hours) => {
+      totalhours += hours.costhour;
+    });
+    const projectExpenses = await projectExpenseModel.find({
+      isDeleted: false,
+    });
+    let totalExpense = 0;
+    projectExpenses.forEach((expense) => {
+      totalExpense += expense.amount;
+    });
+    let totalcost = totalhours + totalExpense;
 
     return res.status(200).send({
       status: true,
@@ -195,6 +185,8 @@ router.get("/V1/getallamount", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
+
 
 router.get("/V1/project/:projectDetailId", async (req, res) => {
   try {

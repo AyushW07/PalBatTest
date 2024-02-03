@@ -95,6 +95,7 @@ router.get("/V1/getmemberData", async (req, res) => {
   }
 });
 
+//this api for project page  members
 router.get("/V1/member/:memberid", async (req, res) => {
   try {
     const memberid = req.params.memberid;
@@ -111,30 +112,40 @@ router.get("/V1/member/:memberid", async (req, res) => {
   }
 });
 
+//This month summary and totalHours
 
+router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
+  try {
+    const memberId = req.params.memberId; // Get memberId from URL parameter
 
-// router.get("/V1/employeeMonthlySummary", async (req, res) => {
-//   try {
-//     const hoursDetails = await hoursModel.find({ isDeleted: false });
-//     console.log("h", hoursDetails);
-//     let projectDetailId = hoursDetails[hoursDetails.length - 1].projectDetailId;
-//     let totalcosthour = 0;
-//     let hoursdata = 0;
-//     hoursDetails.forEach((element) => {
-//       totalcosthour += element.hourCost;
-//       hoursdata += element.totalHours;
-//     });
-//     const member = await memberModel.findOne({ projectDetailId });
-//     const hourCost = member ? member.hourCost : 0;
-//     let totalcostmonth = hourCost * totalHours;
+    const member = await memberModel.findOne({ id: memberId, isDeleted: false });
+    if (!member) {
+      return res.status(404).send({ status: false, message: "Member not found" });
+    }
+    
+    const hoursDetails = await hoursModel.find({ memberId: memberId, isDeleted: false });
+    
+    let totalHours = 0;
+    hoursDetails.forEach((element) => {
+      totalHours += element.totalHours; // Assuming totalHours field has the number of hours worked
+    });
 
-//     return res.status(200).send({
-//       totalcostmonth,
-//     });
-//   } catch (error) {
-//     return res.status(500).send({ status: false, message: error.message });
-//   }
-// });
+    // Calculate the total cost for this member (total hours * member's hourly cost)
+    let totalCostForMonth = totalHours * member.hourCost;
+
+    return res.status(200).send({
+      memberId: memberId,
+      memberName: member.clienteName, // assuming you have a name field
+      totalHours: totalHours,
+      hourlyCost: member.hourCost,
+      totalCostForMonth: totalCostForMonth
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 
 
 router.put("/V1/updatemember/:memberid", async (req, res) => {

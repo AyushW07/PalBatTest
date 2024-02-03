@@ -85,7 +85,7 @@ router.get("/V1/getClientProjects/:clientid", async (req, res) => {
 
     
     const clientProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
-      .select('projectName sellingPrice'); 
+      .select('projectName sellingPrice -_id'); 
 
     const projectsSummary = clientProjects.map(project => ({
       projectName: project.projectName,
