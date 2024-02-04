@@ -2,13 +2,15 @@ const clientModel = require("../models/clientModel");
 const express = require("express");
 
 const router = express.Router();
-const multer = require("multer");
+
 const projectdetailsModel = require("../models/projectdetailsModel");
 const hoursModel = require("../models/hoursModel");
 
+const multer = require("multer");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
 function maskString(str, visibleCount = 2) {
   return (
     str.slice(0, -visibleCount).replace(/./g, "*") + str.slice(-visibleCount)
@@ -101,12 +103,41 @@ router.get("/V1/getClientProjects/:clientid", async (req, res) => {
 
 
 
-//calculate overall colllection and overall due
+//calculate overall colllection and overall due with filter
 router.get("/V1/getOverallCollectionAndDue", async (req, res) => {
   try {
-    // Fetch all projects that are not deleted
-    const projects = await projectdetailsModel.find({ isDeleted: false });
+    let query = req.query;
+    console.log("qu",query)
+    if (query.from && query.to) {
+      let fromDate = new Date(
+        String(query.from).split("-").join("-")
+      );
 
+      fromDate.setUTCHours(0, 0, 0, 0);
+
+      let toDate = new Date(String(query.to).split("-").join("-"));
+
+      toDate.setUTCHours(23, 59, 59, 999);
+console.log()
+      const formattedFromDate = fromDate.toISOString().split("T")[0];
+        const formattedToDate = toDate.toISOString().split("T")[0];
+console.log("foe",formattedFromDate,formattedToDate)
+if(fromDate>toDate){
+  return res.status(400).json({"Message":"Invalid date range."})
+}
+   
+    // Fetch all projects that are not deleted
+    const projects = await projectdetailsModel.find({ isDeleted: false,
+      startingDate: {
+        $gte: formattedFromDate,
+        $lte: formattedToDate,
+      },});
+
+      if (!projects || projects.length === 0) {
+        return res
+          .status(404)
+          .send({ status: false, message: "No projects found" });
+      }
     let overallCollection = 0;
     let overallDue = 0;
 
@@ -119,13 +150,38 @@ router.get("/V1/getOverallCollectionAndDue", async (req, res) => {
     const numberOfProjects = projects.length;
     
     const summary = {
+      projects,
       overallCollection,
       overallDue,
       numberOfProjects,
     };
 
     return res.status(200).send({ status: true, summary });
-  } catch (error) {
+  }
+  const projects = await projectdetailsModel.find({ isDeleted: false});
+
+  if (!projects || projects.length === 0) {
+    return res
+      .status(404)
+      .send({ status: false, message: "No projects found" });
+  }
+let overallCollection = 0;
+let overallDue = 0;
+
+// Iterate through all projects and accumulate the collection and due amounts
+projects.forEach((project) => {
+  overallCollection += project.sellingPrice;
+  overallDue += project.collectiondue;
+});
+
+const numberOfProjects = projects.length;
+
+const summary = {
+  overallCollection,
+  overallDue,
+  numberOfProjects,
+}}
+   catch (error) {
     console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -133,6 +189,7 @@ router.get("/V1/getOverallCollectionAndDue", async (req, res) => {
 
 
 
+//get all client
 router.get("/V1/getclient", async (req, res) => {
   try {
     const clientDetails = await clientModel.find();
@@ -194,6 +251,8 @@ router.get("/V1/getdatas/:clientid", async (req, res) => {
   }
 });
 
+
+//edit data
 router.put("/V1/update/:clientid", async (req, res) => {
   try {
     const clientid = req.params.clientid;

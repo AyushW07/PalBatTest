@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
 const multer = require("multer");
 const hoursModel = require("../models/hoursModel");
+const projectdetailsModel = require("../models/projectdetailsModel");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -86,6 +87,8 @@ router.post("/V1/member", upload.single("Photo"), async (req, res) => {
   }
 });
 
+
+//all member data
 router.get("/V1/getmemberData", async (req, res) => {
   try {
     const expensesDetails = await memberModel.find();
@@ -116,29 +119,49 @@ router.get("/V1/member/:memberid", async (req, res) => {
 
 router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
   try {
-    const memberId = req.params.memberId; // Get memberId from URL parameter
+    const memberId = req.params.memberId;
 
+    // Fetch member details
     const member = await memberModel.findOne({ id: memberId, isDeleted: false });
     if (!member) {
       return res.status(404).send({ status: false, message: "Member not found" });
     }
-    
-    const hoursDetails = await hoursModel.find({ memberId: memberId, isDeleted: false });
-    
-    let totalHours = 0;
-    hoursDetails.forEach((element) => {
-      totalHours += element.totalHours; // Assuming totalHours field has the number of hours worked
-    });
 
-    // Calculate the total cost for this member (total hours * member's hourly cost)
-    let totalCostForMonth = totalHours * member.hourCost;
+    const hoursDetails = await hoursModel.find({ memberId: memberId, isDeleted: false });
+
+    let totalHours = 0;
+    let projectsWorkedOn = {}; 
+    for (const element of hoursDetails) {
+      totalHours += element.totalHours;
+      
+   
+      if (!projectsWorkedOn[element.projectDetailId]) {
+       
+        const project = await projectdetailsModel.findOne({ id: element.projectDetailId, isDeleted: false });
+        if (project) {
+          projectsWorkedOn[element.projectDetailId] = {
+            projectName: project.projectName,
+            totalHours: 0,
+            startingDate: project.startingDate,
+            completionDate: project.completionDate
+          };
+        }
+      }
+      
+      projectsWorkedOn[element.projectDetailId].totalHours += element.totalHours;
+    }
+    const projectDetails = Object.values(projectsWorkedOn);
+
+    // Calculate the total cost for this member for all projects
+    let totalCostForAllProjects = totalHours * member.hourCost;
 
     return res.status(200).send({
       memberId: memberId,
-      memberName: member.clienteName, // assuming you have a name field
+      memberName: member.employeName,
       totalHours: totalHours,
       hourlyCost: member.hourCost,
-      totalCostForMonth: totalCostForMonth
+      totalCostForAllProjects: totalCostForAllProjects,
+      projectDetails: projectDetails
     });
   } catch (error) {
     console.error("Error:", error);
@@ -147,6 +170,7 @@ router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
 });
 
 
+//edit data 
 
 router.put("/V1/updatemember/:memberid", async (req, res) => {
   try {
@@ -168,6 +192,8 @@ router.put("/V1/updatemember/:memberid", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
+//delete all data
 router.delete("/V1/memberDelete", async (req, res) => {
   try {
     const result = await memberModel.deleteMany({});
@@ -178,6 +204,7 @@ router.delete("/V1/memberDelete", async (req, res) => {
   }
 });
 
+//delete data wrt id
 router.delete("/V1/memberDelete/:id", async (req, res) => {
   try {
     const id = req.params.id;

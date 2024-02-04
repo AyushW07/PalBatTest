@@ -78,6 +78,8 @@ router.get("/V1/monthlyProfitSummary", async (req, res) => {
   }
 });
 
+
+// get expenses wrt id
 router.get("/V1/expenses/:expenseid", async (req, res) => {
   try {
     const expensesid = req.params.expenseid;
@@ -92,6 +94,7 @@ router.get("/V1/expenses/:expenseid", async (req, res) => {
   }
 });
 
+//edit the data
 router.put("/V1/updateexpense/:expenseid", async (req, res) => {
   try {
     const expensesid = req.params.expenseid;

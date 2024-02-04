@@ -36,90 +36,49 @@ router.post("/V1/hoursData", async (req, res) => {
   }
 });
 
-//gethourscalculation with total hours
-// router.get("/V1/gethourDataWithTotalCosts", async (req, res) => {
-//   try {
-//     const hoursDetails = await hoursModel.find({ isDeleted: false });
-//     const expensesDetails = await memberModel.find();
-//     let projectDetailId = hoursDetails[hoursDetails.length - 1].projectDetailId;
-//     // console.log("p", projectDetailId);
-//     let totalcosthour = 0;
-//     hoursDetails.forEach((element) => {
-//       totalcosthour += element.costhour;
-//     });
-//     let projectExpense = await projectExpenseModel.find({
-//       projectDetailId: projectDetailId,
-//     });
-//     let totalexpense = 0;
-//     projectExpense.forEach((element) => {
-//       totalexpense += element.amount;
-//     });
-//     let totalcost = totalexpense + totalcosthour;
-// console.log("tot",totalcost)
-//     return res.status(200).send({
-//       totalcost,
-//       hoursDetails,
-//       expensesDetails
-//     });
-//   } catch (error) {
-//     return res.status(500).send({ status: false, message: error.message });
-//   }
-// });
 
-router.get("/V1/getProjectTotalCost/:projectDetailId", async (req, res) => {
+//total cost by all employee wrt particular project
+router.get("/V1/projectTotalCost/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
 
-    // Find the specific project
-    const project = await projectdetailsModel.findOne({ id: projectDetailId, isDeleted: false });
-
-    if (!project) {
-      return res.status(404).send({ status: "failed", message: "Project not found" });
-    }
-
-    // Find all hours related to the current project
-    const hoursDetails = await hoursModel.find({ projectDetailId: projectDetailId, isDeleted: false });
-
-    // Assuming projectExpenses is an array inside the projectDetails model
-    const projectExpenses = project.projectExpenses;
-
-    // Calculate total hours cost for the project and record employee names and individual costs
-    let totalHoursCost = 0;
-    let employeeCosts = [];
-    hoursDetails.forEach(hour => {
-      totalHoursCost += hour.costhour;
-      employeeCosts.push({
-        employeName: hour.employeName,
-        cost: hour.costhour
-      });
+    // Fetch project details
+    const project = await projectdetailsModel.findOne({
+      id: projectDetailId,
+      isDeleted: false,
     });
-
-    // Calculate total expenses for the project
+    if (!project) {
+      return res
+        .status(404)
+        .send({ status: false, message: "Project not found" });
+    }
+    const hoursDetails = await hoursModel.find({
+      projectDetailId: projectDetailId,
+      isDeleted: false,
+    });
+    let totalHoursCost = 0;
+    hoursDetails.forEach((hour) => {
+      totalHoursCost += hour.totalHours * hour.hourCost;
+    });
     let totalExpenses = 0;
-    projectExpenses.forEach(expense => {
+    project.projectExpenses.forEach((expense) => {
       totalExpenses += expense.amount;
     });
-
-    // Calculate total cost for the project
-    let totalCost = totalHoursCost + totalExpenses;
+    let totalProjectCost = totalHoursCost + totalExpenses;
 
     return res.status(200).send({
       status: true,
-      projectDetailId: project.id,
+      projectId: projectDetailId,
       projectName: project.projectName,
       totalHoursCost,
       totalExpenses,
-      totalCost,
-      employeeCosts
+      totalProjectCost,
     });
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-
-
-
 
 // only hours will be update
 router.put("/V1/updatehours/:hoursid", async (req, res) => {
@@ -164,35 +123,59 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
         $set: {
           totalHours: newTotalHours,
           costhour: newCosthour,
-          Hoursday:Hoursday
+          Hoursday: Hoursday,
         },
       },
       { new: true, runValidators: true }
     );
 
-    const projectModel= await projectdetailsModel.findOne({id:updatedData.projectDetailId})
-    let totalExpensive=0
-    projectModel.projectExpenses.forEach((project)=>{
-      totalExpensive+=project.amount
-      
-    })
+    const projectModel = await projectdetailsModel.findOne({
+      id: updatedData.projectDetailId,
+    });
+    let totalExpensive = 0;
+    projectModel?.projectExpenses?.forEach((project) => {
+      totalExpensive += project.amount;
+    });
     // console.log("expense",totalExpensive)
-    let sellingPrice=projectModel?.sellingPrice
-    let totalCostHours=updatedData?.costhour
-    console.log("c",sellingPrice,totalCostHours,totalExpensive)
-    let totalProfit =Math.abs(sellingPrice-(totalExpensive+totalCostHours));
-    console.log("p",totalProfit)
-   if(projectModel.totalprojectProfit>0){
-      await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:updatedData.costhour*parseInt(Hoursday)}}, {new:true} )
-   }else{
-
-     await  projectdetailsModel.findOneAndUpdate({id:projectModel?.id} ,{$inc:{totalprojectProfit:totalProfit}}, {new:true} )
-   }
+    let sellingPrice = projectModel?.sellingPrice;
+    let totalCostHours = updatedData?.costhour;
+    console.log("c", sellingPrice, totalCostHours, totalExpensive);
+    let totalProfit = Math.abs(
+      sellingPrice - (totalExpensive + totalCostHours)
+    );
+    console.log("p", totalProfit);
+    if (projectModel.totalprojectProfit > 0) {
+      await projectdetailsModel.findOneAndUpdate(
+        { id: projectModel?.id },
+        {
+          $inc: {
+            totalprojectProfit: updatedData.costhour * parseInt(Hoursday),
+          },
+        },
+        { new: true }
+      );
+    } else {
+      await projectdetailsModel.findOneAndUpdate(
+        { id: projectModel?.id },
+        { $inc: { totalprojectProfit: totalProfit } },
+        { new: true }
+      );
+    }
     if (!updatedData) {
       return res
         .status(404)
         .send({ status: false, msg: "Unable to update hour entry" });
     }
+
+ 
+    await hoursModel.findOneAndUpdate(
+      { id: hoursid },
+       { totalCost: totalExpensive + updatedData?.costhour } ,
+
+      { new: true, runValidators: true }
+    );
+    
+  
 
     return res.status(200).send({
       status: true,
@@ -205,9 +188,18 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
 });
 
 
+//get all hours 
+router.get("/V1/gethours", async (req, res) => {
+  try {
+    const hoursDetails = await hoursModel.find();
+    return res.status(200).send(hoursDetails);
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
 
-//get hours by projectId 
-router.get("/V1/membersdata/:projectDetailId", async (req, res) => {
+//get hours by projectId
+router.get("/V1/hoursData/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
 
@@ -215,13 +207,12 @@ router.get("/V1/membersdata/:projectDetailId", async (req, res) => {
       projectDetailId: projectDetailId,
       // isDeleted: false,
     });
-    console.log("P",projectData)
+    console.log("P", projectData);
     return res.status(200).send(projectData);
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-
 
 router.delete("/V1/hoursDelate", async (req, res) => {
   try {
@@ -240,12 +231,16 @@ router.delete("/V1/hoursDelete/:id", async (req, res) => {
     const id = req.params.id;
     const hours = await hoursModel.findOne({ id: id });
     if (!hours) {
-      return res.status(404).send({ status: false, message: `hours not found or already deleted` });
+      return res
+        .status(404)
+        .send({ status: false, message: `hours not found or already deleted` });
     }
     const deletedData = await hoursModel.findOneAndDelete({ id: id });
     return res.status(200).send(deletedData);
   } catch (err) {
-    return res.status(500).send({ status: false, message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .send({ status: false, message: "Server error", error: err.message });
   }
 });
 
