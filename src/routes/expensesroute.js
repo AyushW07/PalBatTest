@@ -35,9 +35,32 @@ router.post("/V1/expensesdata", async (req, res) => {
 
 router.get("/V1/monthlyProfitSummary", async (req, res) => {
   try {
+    let query = req.query;
+    // console.log("qu",query)
+    if (query.from && query.to) {
+      let fromDate = new Date(
+        String(query.from).split("-").join("-")
+      );
+
+      fromDate.setUTCHours(0, 0, 0, 0);
+
+      let toDate = new Date(String(query.to).split("-").join("-"));
+
+      toDate.setUTCHours(23, 59, 59, 999);
+
+      const formattedFromDate = fromDate.toISOString().split("T")[0];
+        const formattedToDate = toDate.toISOString().split("T")[0];
+console.log("foe",formattedFromDate,formattedToDate)
+if(fromDate>toDate){
+  return res.status(400).json({"Message":"Invalid date range."})
+}
     const projects = await projectdetailsModel.find({ isDeleted: false });
     const hours = await hoursModel.find({ isDeleted: false });
-    const expenses = await expensesModel.find({ isDeleted: false });
+    const expenses = await expensesModel.find({  isDeleted: false,
+      selectDate: {
+        $gte: formattedFromDate,
+        $lte: formattedToDate,
+      }, });
 
     let totalSellingPrice = 0;
     let totalCollectionDue = 0;
@@ -66,6 +89,51 @@ router.get("/V1/monthlyProfitSummary", async (req, res) => {
     return res.status(200).send({
       status: true,
       monthlyProfitSummary: {
+        expenses,
+        totalSellingPrice,
+        totalCollectionDue,
+        totalCost,
+        totalExpenses,
+        totalProfit,
+      },
+    });
+  }
+    const projects = await projectdetailsModel.find({ isDeleted: false });
+    const hours = await hoursModel.find({ isDeleted: false });
+    const expenses = await expensesModel.find({  isDeleted: false,
+      selectDate: {
+        $gte: formattedFromDate,
+        $lte: formattedToDate,
+      }, });
+
+    let totalSellingPrice = 0;
+    let totalCollectionDue = 0;
+    let totalCost = 0;
+    let totalExpenses = 0;
+
+    // Calculate total selling price and collection due from projects
+    projects.forEach((project) => {
+      totalSellingPrice += project.sellingPrice;
+      totalCollectionDue += project.collectiondue;   //Overall due this month
+    });
+
+    // Calculate total cost from hours
+    hours.forEach((hour) => {
+      totalCost += hour.costhour;
+    });
+
+    // Calculate total expenses
+    expenses.forEach((expense) => {
+      totalExpenses += expense.addAmount; //Amount spent this month
+    });
+
+    // Calculate total profit
+    const totalProfit = Math.abs(totalSellingPrice - (totalCost + totalExpenses)); //Total profits this month
+
+    return res.status(200).send({
+      status: true,
+      monthlyProfitSummary: {
+        expenses,
         totalSellingPrice,
         totalCollectionDue,
         totalCost,

@@ -1,8 +1,11 @@
 const clientModel = require("../models/clientModel");
+const expensesModel = require("../models/expensesModel");
 const hoursModel = require("../models/hoursModel");
 const memberModel = require("../models/memberModel");
 const projectExpenseModel = require("../models/projectExpenseModel");
 const projectdetailsModel = require("../models/projectdetailsModel");
+
+
 const express = require("express");
 const router = express.Router();
 
@@ -214,7 +217,7 @@ if(fromDate>toDate){
 });
 
 
-// calculate total exppense 
+// calculate  exppense wrt projectId
 router.get("/V1/project/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
@@ -307,5 +310,41 @@ router.delete("/V1/projectDelate/:id", async (req, res) => {
       .send({ status: false, message: "Server error", error: err.message });
   }
 });
+
+
+//dashboard calculations of home page 
+
+
+router.get('/V1/dashboard', async (req, res) => {
+  try {
+
+    const totalProjects = await projectdetailsModel.countDocuments({ isDeleted: false });
+
+
+    const expenses = await expensesModel.countDocuments({ isDeleted: false });
+   
+
+ 
+    const totalClients = await clientModel.countDocuments({ isDeleted: false });
+
+    const totalMembers = await memberModel.countDocuments({ isDeleted: false });
+
+  
+    return res.status(200).send({
+      totalProjects,
+      expenses,
+      totalClients,
+      totalMembers
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
+
+
+module.exports = router;
+
 
 module.exports = router;
