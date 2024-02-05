@@ -118,6 +118,7 @@ router.get("/V1/member/:memberid", async (req, res) => {
   }
 });
 
+
 //This month summary and totalHours
 
 router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
@@ -129,17 +130,14 @@ router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
     if (!member) {
       return res.status(404).send({ status: false, message: "Member not found" });
     }
-
+  
     const hoursDetails = await hoursModel.find({ memberId: memberId, isDeleted: false });
-
     let totalHours = 0;
     let projectsWorkedOn = {}; 
     for (const element of hoursDetails) {
       totalHours += element.totalHours;
       
-   
       if (!projectsWorkedOn[element.projectDetailId]) {
-       
         const project = await projectdetailsModel.findOne({ id: element.projectDetailId, isDeleted: false });
         if (project) {
           projectsWorkedOn[element.projectDetailId] = {
@@ -150,13 +148,16 @@ router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
           };
         }
       }
-      
-      projectsWorkedOn[element.projectDetailId].totalHours += element.totalHours;
+
+      // Check if project is defined in projectsWorkedOn before accessing its totalHours
+      if (projectsWorkedOn[element.projectDetailId]) {
+        projectsWorkedOn[element.projectDetailId].totalHours += element.totalHours;
+      }
     }
     const projectDetails = Object.values(projectsWorkedOn);
 
     // Calculate the total cost for this member for all projects
-    let totalCostForAllProjects = totalHours * member.hourCost;
+    let totalCostForAllProjects = totalHours * (member.hourCost || 0);
 
     return res.status(200).send({
       memberId: memberId,

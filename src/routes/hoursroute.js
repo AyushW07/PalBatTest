@@ -5,10 +5,10 @@ const hoursModel = require("../models/hoursModel");
 const projectdetailsModel = require("../models/projectdetailsModel");
 const router = express.Router();
 
-router.post("/V1/hoursData", async (req, res) => {
+router.post("/V1/hoursDatas", async (req, res) => {
   try {
     const {
-      memberId,
+     
       employeName,
       Hoursday,
       jobRole,
@@ -17,7 +17,7 @@ router.post("/V1/hoursData", async (req, res) => {
       hourCost,
     } = req.body;
     if (
-      (!memberId,
+      (
       !Hoursday,
       !totalHours,
       !costhour,
@@ -34,6 +34,7 @@ router.post("/V1/hoursData", async (req, res) => {
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
+  
 });
 
 
@@ -202,10 +203,10 @@ router.get("/V1/gethours", async (req, res) => {
 router.get("/V1/hoursData/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
-
+// console.log("project",projectDetailId)
     const projectData = await hoursModel.find({
       projectDetailId: projectDetailId,
-      // isDeleted: false,
+       isDeleted: false,
     });
     console.log("P", projectData);
     return res.status(200).send(projectData);

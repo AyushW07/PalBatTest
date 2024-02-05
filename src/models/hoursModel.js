@@ -9,7 +9,7 @@ const hourSchema = new mongoose.Schema(
     },
     memberId: {
       type: String,
-      unique: true,
+      // unique: true,
     },
     projectDetailId: {
       type: String,
