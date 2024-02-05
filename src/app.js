@@ -18,5 +18,6 @@ app.use(membersRouter);
 app.use(expensesRouter);
 app.use(hoursRoute);
 app.use(projectExpenseRoute);
+app.use('/uploads', express.static('uploads'));
 
 module.exports = app; // Use module.exports here

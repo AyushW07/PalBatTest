@@ -38,29 +38,32 @@ router.post("/V1/member", upload.single("Photo"), async (req, res) => {
 
       IFSCCode,
     } = req.body;
-    // if (
-    //   (!employeName,
-    //     !photo,
-    //     !description,
-    //     !jobRole,
-    //     !department,
-    //     !position,
-    //     !joiningDate,
-    //     !ctc,
-    //     !hourCost,
-    //     !bankName,
-    //     !accholderName,
-    //     !GSTCGST,
-    //     !panNumber,
-    //     !accountNumber,
-    //     !accountType,
-    //     !IFSCCode)
-    // )
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, message: "All fields are required" });
+    if (
+      (!employeName,
+        !photo,
+        !description,
+        !jobRole,
+        !department,
+        !position,
+        !joiningDate,
+        !ctc,
+        !hourCost,
+        !bankName,
+        !accholderName,
+        !GSTCGST,
+        !panNumber,
+        !accountNumber,
+        !accountType,
+        !IFSCCode)
+    )
+      return res
+        .status(400)
+        .send({ status: false, message: "All fields are required" });
 
-    const memberDetail = new memberModel(req.body);
+    const memberDetail = new memberModel({
+      ...req.body,
+      photo: req.file
+    });
 
     let member = await memberDetail.save();
     const expensesData = new hoursModel({

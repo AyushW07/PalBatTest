@@ -26,24 +26,27 @@ router.post("/V1/proDetails", async (req, res) => {
       projectMembers,
       invoice,
       GSTCGST,
+
+
     } = Data;
     if (
       (!projectName,
-      !selectClients,
-      !startingDate,
-      !completionDate,
-      !projectMembers,
-      !sellingPrice,
-      !eastimatedPrice,
-      !advance,
-      !collectiondue,
-      !services,
-      !Status,
-      !proForma,
-      !invoice,
-      !losses,
-      !projectExpenses,
-      !GSTCGST)
+        !selectClients,
+        !startingDate,
+        !completionDate,
+        !projectMembers,
+        !sellingPrice,
+        !eastimatedPrice,
+        !advance,
+        !collectiondue,
+        !services,
+        !Status,
+        !proForma,
+        !invoice,
+        !losses,
+        !projectExpenses,
+        !GSTCGST
+      )
     )
       return res
         .status(400)

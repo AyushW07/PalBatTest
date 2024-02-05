@@ -38,19 +38,19 @@ router.post("/V1/client", upload.single("Photo"), async (req, res) => {
     } = req.body;
     if (
       (!clienteName,
-      !photo,
-      !description,
-      !startDate,
-      !endDate,
-      !Poc,
-      !status,
-      !bankName,
-      !accholderName,
-      !GSTCGST,
-      !panNumber,
-      !accountNumber,
-      !accountType,
-      !IFSCCode)
+        !photo,
+        !description,
+        !startDate,
+        !endDate,
+        !Poc,
+        !status,
+        !bankName,
+        !accholderName,
+        !GSTCGST,
+        !panNumber,
+        !accountNumber,
+        !accountType,
+        !IFSCCode)
     )
       return res
         .status(400)
@@ -62,7 +62,7 @@ router.post("/V1/client", upload.single("Photo"), async (req, res) => {
     return res.status(201).send({
       status: true,
       message: "client created successfully",
-    
+
       data: {
         ...clientDetail.toObject(),
         accountNumber: maskString(clientDetail.accountNumber.toString()),
@@ -85,7 +85,7 @@ router.get("/V1/getClientProjects/:clientid", async (req, res) => {
       return res.status(404).send({ status: "failed", message: "Client not found" });
     }
 
-    
+
     const clientProjects = await projectdetailsModel.find({ clientid: clientid, isDeleted: false })
       .select('projectName sellingPrice -_id'); 
 
@@ -148,7 +148,7 @@ if(fromDate>toDate){
     });
 
     const numberOfProjects = projects.length;
-    
+
     const summary = {
       projects,
       overallCollection,
@@ -202,49 +202,49 @@ router.get("/V1/getclient", async (req, res) => {
 //calculate netprofit and overallmoney no of projects invoices proforma {clientDetails}
 router.get("/V1/getdatas/:clientid", async (req, res) => {
   try {
-    
+
     const clientid = req.params.clientid;
     const client = await clientModel.findOne({ id: clientid, isDeleted: false });
-   const projects = await projectdetailsModel.find({
+    const projects = await projectdetailsModel.find({
       clientid: clientid,
       isDeleted: false,
     });
     let netprofit = 0;
-    let sellingprice= 0;
+    let sellingprice = 0;
     let proFormaTotal = 0;
     let invoiceTotal = 0;
     let firstProjectDate = null;
-    projects.forEach(project =>{
-      netprofit+=project.totalprojectProfit || 0
-      sellingprice+=project.sellingPrice
-      proFormaTotal += project.proForma || 0; 
+    projects.forEach(project => {
+      netprofit += project.totalprojectProfit || 0
+      sellingprice += project.sellingPrice
+      proFormaTotal += project.proForma || 0;
       invoiceTotal += project.invoice || 0;
-      const projectDate = new Date(project.startingDate); 
+      const projectDate = new Date(project.startingDate);
       firstProjectDate = firstProjectDate === null ? projectDate : (projectDate < firstProjectDate ? projectDate : firstProjectDate);
-    
+
     });
     const numberOfProjects = projects.length;
     const bankDetails = {
       bankName: client.bankName,
-      accholderName:client.accholderName,
+      accholderName: client.accholderName,
       accountNumber: client.accountNumber,
       GSTCGST: client.GSTCGST,
       panNumber: client.panNumber,
       accountType: client.accountType,
       IFSCCode: client.IFSCCode,
-      description:client.description,
-      photo:client.photo,
+      description: client.description,
+      photo: client.photo,
     };
-    
+
     return res.status(200).send({
       netprofit,
-      sellingprice,numberOfProjects,
+      sellingprice, numberOfProjects,
       proFormaTotal,
       invoiceTotal,
       bankDetails,
       firstProjectDate: firstProjectDate ? firstProjectDate.toISOString().split('T')[0] : null // Format date as YYYY-MM-DD
     });
-  
+
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
