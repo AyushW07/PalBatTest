@@ -292,6 +292,26 @@ router.delete("/V1/projectDelate", async (req, res) => {
 });
 
 
+//project wrt member id
+router.get("/V1/projectsForMember/:memberId", async (req, res) => {
+  try {
+    const memberId = req.params.memberId;
+    const projects = await projectdetailsModel.find({
+      "projectMembers.id": memberId,
+      isDeleted: false,
+    });
+
+    if (!projects) {
+      return res.status(404).send({ status: false, message: "No projects found for this member" });
+    }
+
+    return res.status(200).send({ status: true, data: projects });
+  } catch (error) {
+    console.error("Error fetching projects for member:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 //delete wrt id
 router.delete("/V1/projectDelate/:id", async (req, res) => {
   try {
