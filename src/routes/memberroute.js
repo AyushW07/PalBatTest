@@ -2,11 +2,10 @@ const memberModel = require("../models/memberModel");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
-const multer = require("multer");
+
 const hoursModel = require("../models/hoursModel");
 const projectdetailsModel = require("../models/projectdetailsModel");
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+
 
 function maskString(str, visibleCount = 2) {
   if (typeof str !== 'string' || str === undefined) {
@@ -16,7 +15,7 @@ function maskString(str, visibleCount = 2) {
     str.slice(0, -visibleCount).replace(/./g, "*") + str.slice(-visibleCount)
   );
 }
-router.post("/V1/member", upload.single("Photo"), async (req, res) => {
+router.post("/V1/member", async (req, res) => {
   try {
     const {
       employeName,

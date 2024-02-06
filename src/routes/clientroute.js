@@ -6,17 +6,17 @@ const router = express.Router();
 const projectdetailsModel = require("../models/projectdetailsModel");
 const hoursModel = require("../models/hoursModel");
 
-const multer = require("multer");
+// const multer = require("multer");
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage: storage });
 
 function maskString(str, visibleCount = 2) {
   return (
     str.slice(0, -visibleCount).replace(/./g, "*") + str.slice(-visibleCount)
   );
 }
-router.post("/V1/client", upload.single("Photo"), async (req, res) => {
+router.post("/V1/client",  async (req, res) => {
   try {
     const {
       clienteName,

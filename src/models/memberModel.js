@@ -49,16 +49,16 @@ const membersSchema = new mongoose.Schema(
     },
     accountNumber: {
       type: Number,
-      // required: true,
-      // match: [/^[0-9]{9,18}$/, "Please fill a valid account number"],
+      required: true,
+    //  match: [/^[0-9]{9,18}$/, "Please fill a valid account number"],
     },
     GSTCGST: {
-      type: String,
+      type: Number,
     },
     panNumber: {
       type: String,
-      // required: true,
-      // match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please fill a valid PAN number"],
+      required: true,
+      //  match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Please fill a valid PAN number"],
     },
     accountType: {
       type: String,
@@ -66,8 +66,8 @@ const membersSchema = new mongoose.Schema(
     },
     IFSCCode: {
       type: String,
-      // required: true,
-      // match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
+      required: true,
+      //  match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
     },
     isDeleted: {
       type: Boolean,

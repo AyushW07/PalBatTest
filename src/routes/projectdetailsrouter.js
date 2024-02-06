@@ -225,24 +225,45 @@ router.get("/V1/project/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
 
-    const projectId = await projectdetailsModel.findOne({
+    const project = await projectdetailsModel.findOne({
       id: projectDetailId,
-      // isDeleted: false,
     });
-    let totalexpense = 0;
-    projectId.projectExpenses.forEach((expense) => {
-      totalexpense += expense.amount || 0; 
+
+    if (!project) {
+      return res.status(404).send({ status: false, message: "Project not found" });
+    }
+
+    let totalExpense = 0;
+    const expensesDetails = project.projectExpenses.map((expense) => {
+      
+      totalExpense += Number(expense.amount) || 0;
+      return {
+        expenseName: expense.expenseName,
+        amount: expense.amount,
+        date: expense.date,
+        reason: expense.reason
+      };
     });
+
+    // Update the total expense in the project (if needed)
     await projectdetailsModel.findOneAndUpdate(
       { id: projectDetailId },
-      { totalexpense: totalexpense },
+      { totalExpense: totalExpense },
       { new: true }
     );
-    return res.status(200).send({ projectId, totalexpense });
+
+    return res.status(200).send({ 
+      projectDetails: project, 
+      totalExpense: totalExpense,
+      expensesDetails: expensesDetails 
+    });
+
   } catch (error) {
+    console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
 
 
 //update project with projectId
@@ -292,22 +313,54 @@ router.delete("/V1/projectDelate", async (req, res) => {
 });
 
 
-//project wrt member id
-router.get("/V1/projectsForMember/:memberId", async (req, res) => {
+router.get("/V1/projectDetailsAndCost/:projectDetailId", async (req, res) => {
   try {
-    const memberId = req.params.memberId;
-    const projects = await projectdetailsModel.find({
-      "projectMembers.id": memberId,
+    const projectDetailId = req.params.projectDetailId;
+
+    // Fetch project details
+    const project = await projectdetailsModel.find({
+      projectDetailId: projectDetailId,
       isDeleted: false,
     });
-
-    if (!projects) {
-      return res.status(404).send({ status: false, message: "No projects found for this member" });
+    if (!project) {
+      return res.status(404).send({ status: false, message: "Project not found" });
     }
 
-    return res.status(200).send({ status: true, data: projects });
+    // Fetch hour details for the project
+    const hoursDetails = await hoursModel.find({
+      projectDetailId: projectDetailId,
+      isDeleted: false,
+    });
+    let totalHoursCost = 0;
+    hoursDetails.forEach((hour) => {
+      totalHoursCost += hour.totalHours * hour.hourCost;
+    });
+
+    // Calculate total expenses
+    let totalExpenses = 0;
+    if (Array.isArray(project.projectExpenses)) {
+      project.projectExpenses.forEach((expense) => {
+        totalExpenses += expense.amount; // Make sure amount is a number
+      });
+    }
+
+    // Calculate total project cost
+    let totalProjectCost = totalHoursCost + totalExpenses;
+
+    // Prepare response
+    const response = {
+      status: true,
+      projectId: projectDetailId,
+      projectName: project.projectName,
+      hoursDetails, // Includes detailed hours data for the project
+      totalHoursCost,
+      totalExpenses,
+      totalProjectCost,
+    };
+
+    return res.status(200).send(response);
   } catch (error) {
-    console.error("Error fetching projects for member:", error);
+    console.error("Error:", error);
     return res.status(500).send({ status: false, message: error.message });
   }
 });
@@ -333,6 +386,27 @@ router.delete("/V1/projectDelate/:id", async (req, res) => {
       .send({ status: false, message: "Server error", error: err.message });
   }
 });
+
+//project wrt member id
+router.get("/V1/projectsForMember/:memberId", async (req, res) => {
+  try {
+    const memberId = req.params.memberId;
+    const projects = await projectdetailsModel.find({
+      "projectMembers.id": memberId,
+      isDeleted: false,
+    });
+
+    if (!projects) {
+      return res.status(404).send({ status: false, message: "No projects found for this member" });
+    }
+
+    return res.status(200).send({ status: true, data: projects });
+  } catch (error) {
+    console.error("Error fetching projects for member:", error);
+    return res.status(500).send({ status: false, message: error.message });
+  }
+});
+
 
 
 //dashboard calculations of home page 

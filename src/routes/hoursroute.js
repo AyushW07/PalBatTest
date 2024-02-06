@@ -65,9 +65,12 @@ router.get("/V1/projectDetailsAndCost/:projectDetailId", async (req, res) => {
       // Calculate total expenses
       let totalExpenses = 0;
       if (Array.isArray(project.projectExpenses)) {
-          project.projectExpenses.forEach((expense) => {
-              totalExpenses += expense.amount; // Make sure amount is a number
-          });
+        project.projectExpenses.forEach((expense) => {
+          // Check if expense.amount is a valid number and not null or undefined
+          if (typeof expense.amount === "number" && !isNaN(expense.amount)) {
+            totalExpenses += expense.amount;
+          }
+        });
       }
 
       // Calculate total project cost
@@ -155,23 +158,23 @@ router.put("/V1/updatehours/:hoursid", async (req, res) => {
       sellingPrice - (totalExpensive + totalCostHours)
     );
     console.log("p", totalProfit);
-    if (projectModel.totalprojectProfit > 0) {
-      await projectdetailsModel.findOneAndUpdate(
-        { id: projectModel?.id },
-        {
-          $inc: {
-            totalprojectProfit: updatedData.costhour * parseInt(Hoursday),
-          },
-        },
-        { new: true }
-      );
-    } else {
-      await projectdetailsModel.findOneAndUpdate(
-        { id: projectModel?.id },
-        { $inc: { totalprojectProfit: totalProfit } },
-        { new: true }
-      );
-    }
+    // if (projectModel.totalprojectProfit > 0) {
+    //   await projectdetailsModel.findOneAndUpdate(
+    //     { id: projectModel?.id },
+    //     {
+    //       $inc: {
+    //         totalprojectProfit: updatedData.costhour * parseInt(Hoursday),
+    //       },
+    //     },
+    //     { new: true }
+    //   );
+    // } else {
+    //   await projectdetailsModel.findOneAndUpdate(
+    //     { id: projectModel?.id },
+    //     { $inc: { totalprojectProfit: totalProfit } },
+    //     { new: true }
+    //   );
+    // }
     if (!updatedData) {
       return res
         .status(404)
