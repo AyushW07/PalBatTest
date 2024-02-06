@@ -51,7 +51,7 @@ const clientSchema = new mongoose.Schema(
       // match: [/^[0-9]{9,18}$/, "Please fill a valid account number"],
     },
     GSTCGST: {
-      type: String,
+      type: Number,
     },
     panNumber: {
       type: String,
@@ -65,7 +65,7 @@ const clientSchema = new mongoose.Schema(
     IFSCCode: {
       type: String,
       required: true,
-      //  match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
+      // match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please fill a valid IFSC code"],
     },
     isDeleted: {
       type: Boolean,
