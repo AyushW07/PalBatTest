@@ -77,7 +77,11 @@ router.get("/V1/getallData", async (req, res) => {
     const projectsWithTotalExpenses = projects.map((project) => {
       let totalexpense = 0;
       project.projectExpenses.forEach((expense) => {
-        totalexpense += expense.amount; // assuming 'amount' is the field that stores the expense value
+        // Convert amount to Number
+        const amount = Number(expense.amount);
+        if (!isNaN(amount)) { // Check if the conversion was successful
+          totalexpense += amount; // Add amount to total expense
+        }
       });
       return {
         ...project.toObject(),
@@ -91,7 +95,6 @@ router.get("/V1/getallData", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-
 //get clientName wrt to this api
 router.get("/V1/getclient", async (req, res) => {
   try {
@@ -341,10 +344,6 @@ router.get('/V1/dashboard', async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
-
-
-
-module.exports = router;
 
 
 module.exports = router;

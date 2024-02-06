@@ -39,45 +39,55 @@ router.post("/V1/hoursDatas", async (req, res) => {
 
 
 //total cost by all employee wrt particular project
-router.get("/V1/projectTotalCost/:projectDetailId", async (req, res) => {
+router.get("/V1/projectDetailsAndCost/:projectDetailId", async (req, res) => {
   try {
-    const projectDetailId = req.params.projectDetailId;
+      const projectDetailId = req.params.projectDetailId;
 
-    // Fetch project details
-    const project = await projectdetailsModel.findOne({
-      id: projectDetailId,
-      isDeleted: false,
-    });
-    if (!project) {
-      return res
-        .status(404)
-        .send({ status: false, message: "Project not found" });
-    }
-    const hoursDetails = await hoursModel.find({
-      projectDetailId: projectDetailId,
-      isDeleted: false,
-    });
-    let totalHoursCost = 0;
-    hoursDetails.forEach((hour) => {
-      totalHoursCost += hour.totalHours * hour.hourCost;
-    });
-    let totalExpenses = 0;
-    project.projectExpenses.forEach((expense) => {
-      totalExpenses += expense.amount;
-    });
-    let totalProjectCost = totalHoursCost + totalExpenses;
+      // Fetch project details
+      const project = await projectdetailsModel.find({
+        projectDetailId: projectDetailId,
+          isDeleted: false,
+      });
+      if (!project) {
+          return res.status(404).send({ status: false, message: "Project not found" });
+      }
 
-    return res.status(200).send({
-      status: true,
-      projectId: projectDetailId,
-      projectName: project.projectName,
-      totalHoursCost,
-      totalExpenses,
-      totalProjectCost,
-    });
+      // Fetch hour details for the project
+      const hoursDetails = await hoursModel.find({
+          projectDetailId: projectDetailId,
+          isDeleted: false,
+      });
+      let totalHoursCost = 0;
+      hoursDetails.forEach((hour) => {
+          totalHoursCost += hour.totalHours * hour.hourCost;
+      });
+
+      // Calculate total expenses
+      let totalExpenses = 0;
+      if (Array.isArray(project.projectExpenses)) {
+          project.projectExpenses.forEach((expense) => {
+              totalExpenses += expense.amount; // Make sure amount is a number
+          });
+      }
+
+      // Calculate total project cost
+      let totalProjectCost = totalHoursCost + totalExpenses;
+
+      // Prepare response
+      const response = {
+          status: true,
+          projectId: projectDetailId,
+          projectName: project.projectName,
+          hoursDetails, // Includes detailed hours data for the project
+          totalHoursCost,
+          totalExpenses,
+          totalProjectCost,
+      };
+
+      return res.status(200).send(response);
   } catch (error) {
-    console.error("Error:", error);
-    return res.status(500).send({ status: false, message: error.message });
+      console.error("Error:", error);
+      return res.status(500).send({ status: false, message: error.message });
   }
 });
 
@@ -199,7 +209,7 @@ router.get("/V1/gethours", async (req, res) => {
   }
 });
 
-//get hours by projectId
+//get hours by projectId home page
 router.get("/V1/hoursData/:projectDetailId", async (req, res) => {
   try {
     const projectDetailId = req.params.projectDetailId;
@@ -246,3 +256,7 @@ router.delete("/V1/hoursDelete/:id", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+

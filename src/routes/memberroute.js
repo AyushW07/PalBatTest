@@ -121,41 +121,37 @@ router.get("/V1/member/:memberid", async (req, res) => {
 router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
   try {
     const memberId = req.params.memberId;
-
-    // Fetch member details
     const member = await memberModel.findOne({ id: memberId, isDeleted: false });
     if (!member) {
       return res.status(404).send({ status: false, message: "Member not found" });
     }
   
     const hoursDetails = await hoursModel.find({ memberId: memberId, isDeleted: false });
+    console.log(`Found ${hoursDetails.length} hours entries for member ${memberId}`);
     let totalHours = 0;
-    let projectsWorkedOn = {}; 
+    let projectsWorkedOn = {};
     for (const element of hoursDetails) {
       totalHours += element.totalHours;
-      
       if (!projectsWorkedOn[element.projectDetailId]) {
         const project = await projectdetailsModel.findOne({ id: element.projectDetailId, isDeleted: false });
+        console.log(`Found project for projectDetailId ${element.projectDetailId}:`, project);
         if (project) {
           projectsWorkedOn[element.projectDetailId] = {
             projectName: project.projectName,
-            totalHours: 0,
+            totalHours: element.totalHours, // Initialize with current element's totalHours
             startingDate: project.startingDate,
             completionDate: project.completionDate
           };
         }
-      }
-
-      // Check if project is defined in projectsWorkedOn before accessing its totalHours
-      if (projectsWorkedOn[element.projectDetailId]) {
+      } else {
+        // Project already in projectsWorkedOn, just add the hours
         projectsWorkedOn[element.projectDetailId].totalHours += element.totalHours;
       }
     }
+    console.log('Projects worked on:', projectsWorkedOn);
     const projectDetails = Object.values(projectsWorkedOn);
-
-    // Calculate the total cost for this member for all projects
     let totalCostForAllProjects = totalHours * (member.hourCost || 0);
-
+    
     return res.status(200).send({
       memberId: memberId,
       memberName: member.employeName,
@@ -169,6 +165,7 @@ router.get("/V1/employeeMonthlySummary/:memberId", async (req, res) => {
     return res.status(500).send({ status: false, message: error.message });
   }
 });
+
 
 
 //edit data 
@@ -219,6 +216,9 @@ router.delete("/V1/memberDelete/:id", async (req, res) => {
     return res.status(500).send({ status: false, message: "Server error", error: err.message });
   }
 });
+
+
+
 
 
 module.exports = router;
